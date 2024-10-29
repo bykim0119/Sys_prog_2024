@@ -1,0 +1,33 @@
+# DURATION     TID     FUNCTION
+DURATION     TID     FUNCTION
+   0.467 us [  1016] | __monstartup();
+   0.175 us [  1016] | __cxa_atexit();
+            [  1016] | main() {
+   4.450 us [  1016] |   puts();
+            [  1016] |   init() {
+   0.198 us [  1016] |     malloc();
+   0.764 us [  1016] |   } /* init */
+            [  1016] |   combine() {
+   0.090 us [  1016] |     vec_length();
+   0.103 us [  1016] |     get_vec_element();
+   0.069 us [  1016] |     vec_length();
+   0.070 us [  1016] |     get_vec_element();
+   0.067 us [  1016] |     vec_length();
+   0.069 us [  1016] |     get_vec_element();
+   0.067 us [  1016] |     vec_length();
+   0.068 us [  1016] |     get_vec_element();
+   0.068 us [  1016] |     vec_length();
+   0.067 us [  1016] |     get_vec_element();
+   0.069 us [  1016] |     vec_length();
+   0.069 us [  1016] |     get_vec_element();
+   0.067 us [  1016] |     vec_length();
+   0.067 us [  1016] |     get_vec_element();
+   0.065 us [  1016] |     vec_length();
+   0.067 us [  1016] |     get_vec_element();
+   0.068 us [  1016] |     vec_length();
+   0.068 us [  1016] |     get_vec_element();
+   0.069 us [  1016] |     vec_length();
+   0.067 us [  1016] |     get_vec_element();
+   0.065 us [  1016] |     vec_length();
+   3.507 us [  1016] |   } /* combine */
+   9.472 us [  1016] | } /* main */

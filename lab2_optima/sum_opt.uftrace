@@ -1,0 +1,13 @@
+This is the optimized version .. 
+# DURATION     TID     FUNCTION
+   0.388 us [  1053] | __monstartup();
+   0.185 us [  1053] | __cxa_atexit();
+            [  1053] | main() {
+   4.550 us [  1053] |   puts();
+            [  1053] |   init() {
+   0.181 us [  1053] |     malloc();
+   0.756 us [  1053] |   } /* init */
+            [  1053] |   combine() {
+   0.097 us [  1053] |     vec_length();
+   0.456 us [  1053] |   } /* combine */
+   6.590 us [  1053] | } /* main */

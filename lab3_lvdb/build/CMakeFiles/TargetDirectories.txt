@@ -1,0 +1,3 @@
+/home/bykim0119/sys_prog2024/lab3_lvdb/build/CMakeFiles/leveldb_bench.dir
+/home/bykim0119/sys_prog2024/lab3_lvdb/build/CMakeFiles/edit_cache.dir
+/home/bykim0119/sys_prog2024/lab3_lvdb/build/CMakeFiles/rebuild_cache.dir

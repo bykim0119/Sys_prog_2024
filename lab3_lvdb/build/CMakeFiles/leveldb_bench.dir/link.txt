@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/leveldb_bench.dir/main.cpp.o -o leveldb_bench   -L/home/bykim0119/sys_prog2024/lab3_lvdb/leveldb/build  -Wl,-rpath,/home/bykim0119/sys_prog2024/lab3_lvdb/leveldb/build -lleveldb 
