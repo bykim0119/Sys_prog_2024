@@ -6,8 +6,8 @@ int put(kvs_t* kvs, const char* key, const char* value) {
 
 	printf("put: %s, %s\n", key, value);
 
-    for (int i = kvs->kvs_mx_level; i >= 0; i--) { //key에 해당하는 값을 찾았거나 없을 경우 이전 노드를 반환
-        while (node->next[i] && strcmp(node->next[i]->key, key) < 0) {
+    for (int i = kvs->kvs_mx_level; i >= 0; i--) { 
+        while (node->next[i] && strcmp(node->next[i]->key, key) < 0) {//key에 해당하는 값을 찾았거나 없을 경우
             node = node->next[i];
         }
         prev_node[i] = node;
@@ -32,6 +32,7 @@ int put(kvs_t* kvs, const char* key, const char* value) {
         strcpy(node->key, key);
         node->value = strdup(value);
 
+		//inserting new node
         for (int i = 0; i <= level; i++) { //모든 레벨에 대해서 prev_node와 next사이에 new_node(node)를 삽입(prev_node -> new_node -> next)
             node->next[i] = prev_node[i]->next[i]; //new_node의 다음노드를 prev_node의 다음노드로 함.
             prev_node[i]->next[i] = node; //prev_node의 다음노드를 new_node로 함.
