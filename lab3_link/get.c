@@ -12,5 +12,5 @@ char* get(kvs_t* kvs, const char* key) {
     if (node && strcmp(node->key, key) == 0) {
         return node->value;
     }
-    return NULL;
+    return NULL; //key가 발견되지 않았을 때.
 }
