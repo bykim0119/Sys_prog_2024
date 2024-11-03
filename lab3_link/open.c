@@ -1,6 +1,6 @@
 #include "kvs.h"
 
-int rand_lv(){
+int rand_lv(){ //레벨 난수 생성 함수
 	srand(time(NULL));
     int kvs_mx_level = 0;
     while (rand() < RAND_MAX / 2 && kvs_mx_level < MAX_LEVEL - 1) {
@@ -29,8 +29,7 @@ kvs_t* open()
     for (int i = 0; i < MAX_LEVEL; i++) {
         kvs->header->next[i] = NULL;
     }
-	// if(kvs)
-	// 	kvs->items = 0;
+
 	printf("Open: kvs has %d items\n", kvs->items);
 
 

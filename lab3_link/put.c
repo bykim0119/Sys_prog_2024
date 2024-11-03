@@ -1,18 +1,10 @@
 #include "kvs.h"
 
-// int put(kvs_t* kvs, const char* key, const char* value)
-// {
-// 	printf("put: %s, %s\n", key, value);
-
-// 	/* do program here */
-// 	return 0;
-// }
-
 int put(kvs_t* kvs, const char* key, const char* value) {
-    node_t* update[MAX_LEVEL];
+    node_t* update[MAX_LEVEL]; //MAX_LEVEL = 16
     node_t* node = kvs->header;
 
-	//printf("put: %s, %s\n", key, value);
+	printf("put: %s, %s\n", key, value);
 
     for (int i = kvs->kvs_mx_level; i >= 0; i--) {
         while (node->next[i] && strcmp(node->next[i]->key, key) < 0) {
