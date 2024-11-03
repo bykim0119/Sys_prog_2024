@@ -29,21 +29,22 @@ int main()
 	char op[10], key_q[100], value_q[100];
 
     while (fscanf(queryFile, "%[^,],%[^,],%s\n", op, key_q, value_q) != EOF) {
-		//if (cnt == 100) break;
 		if (strcmp(op, "get") == 0){
-			// char return_val = get(kvs, key_q);
-			// fprintf(answerFile, "%s\n", return_val);
+			//get으로 찾은 결과(value)를 answer.dat에 저장, 존재하지 않는 키면 -1로 저장.
+			char* return_val = get(kvs, key_q);
+			if (!return_val){
+			fprintf(answerFile, "%s\n", "-1");
+			continue;
+			}
+			fprintf(answerFile, "%s\n", return_val);
 		
 		}
 		else if (strcmp(op, "set") == 0){
-			//set(put)으로 생긴 결과(value)를 answer.dat에 저장
-			//put(kvs, key_q, value_q);
-			//printf("cnt: %d\n", cnt);
-			cnt++;
+			//set(get)이면 새로운 key, value 등록
+			put(kvs, key_q, value_q);
 		}
-		//cnt++;
     }
-
+	printf("cnt: %d\n",cnt);
     fclose(queryFile);
     fclose(answerFile);
 
