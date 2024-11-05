@@ -13,7 +13,7 @@ kvs_t* open()
 {
 	kvs_t* kvs = (kvs_t*) malloc (sizeof(kvs_t));
 	if (!kvs) {
-		printf("Failed to allocate kvs\n");
+		printf("Allocating kvs Failed\n");
 		return NULL;
 	}
     kvs->kvs_mx_level = 0;
@@ -22,7 +22,7 @@ kvs_t* open()
     kvs->header = (node_t*)malloc(sizeof(node_t));
 
     if (!kvs->header) {
-        printf("Failed to allocate header\n");
+        printf("Allocating header failed\n");
         free(kvs);
         return NULL;
     }
