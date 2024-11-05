@@ -4,7 +4,7 @@ int put(kvs_t* kvs, const char* key, const char* value) {
     node_t* prev_node[MAX_LEVEL]; //MAX_LEVEL = 16
     node_t* node = kvs->header;
 
-	printf("put: %s, %s\n", key, value);
+	//printf("put: %s, %s\n", key, value);
 
     for (int i = kvs->kvs_mx_level; i >= 0; i--) { 
         while (node->next[i] && strcmp(node->next[i]->key, key) < 0) {//key에 해당하는 값을 찾았거나 없을 경우
