@@ -2,6 +2,8 @@
 
 int main()
 {
+	FILE* imgFILE = fopen("kvs.img", "rw");
+
 	kvs_t* kvs = open();
 
 	if(!kvs) {
@@ -12,7 +14,7 @@ int main()
 	FILE* queryFile = fopen("query.dat", "r");
     FILE* answerFile = fopen("answer.dat", "w");
 	
-	if (!queryFile || !answerFile){
+	if (!queryFile || !answerFile || !imgFILE){
 		printf("File not Found\n");
 		close(kvs);
 		return -1;

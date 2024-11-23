@@ -28,5 +28,5 @@ char* get(kvs_t* kvs, const char* key);
 int rand_lv();
 
 //func added for snapshot
-int do_snapshot(int fd);
-kvs_t* do_recovery(int fd);
+int do_snapshot(kvs_t* kvs, FILE* file); //file : src image file
+kvs_t* do_recovery(FILE* file);

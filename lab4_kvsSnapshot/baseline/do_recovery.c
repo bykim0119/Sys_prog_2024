@@ -1,5 +1,6 @@
 #include "kvs.h"
 
+kvs_t* do_recovery(FILE* file){
 
-
-kvs_t* do_recovery(int fd);
+    return 
+}
