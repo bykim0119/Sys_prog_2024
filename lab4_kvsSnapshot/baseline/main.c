@@ -38,10 +38,12 @@ int main()
 			//set(get)이면 새로운 key, value 등록
 			put(kvs, key_q, value_q);
 		}
+		// do_snapshot
     }
 
     fclose(queryFile);
     fclose(answerFile);
+	fclose(imgFILE);
 
 	close(kvs);
 	
