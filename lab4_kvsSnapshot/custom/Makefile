@@ -1,16 +1,17 @@
 SRCS = main.c
-LIBSRCS = open.c close.c put.c get.c do_snapshot.c do_recovery.c
+LIBSRCS = open.c close.c put.c get.c
 TARG = kvs_static
 TARG_DYNAMIC = kvs_dynamic
 
 CC = gcc
-OPTS = -Wall -g
+OPTS = -Wall -g 
 LIBS = -L. -lkvs -Wl,-rpath=.
 
 OBJS = $(SRCS:.c=.o)
 LOBJS = $(LIBSRCS:.c=.o)
 LARS = libkvs.a
 SLARS = libkvs.so
+AOBJS = kvs.img answer.dat
 
 all: 
 #static
@@ -23,7 +24,7 @@ $(LARS) : $(LOBJS)
 	ar rs $(LARS) $(LOBJS)
 
 %.o: %.c
-	$(CC) $(OPTS) -c $< -o $@
+	$(CC) $(OPTS) -fPIC -c $< -o $@
 
 #dynamic
 dynamic: $(TARG_DYNAMIC)
@@ -32,9 +33,9 @@ $(TARG_DYNAMIC) : $(OBJS) $(SLARS)
 	ldd $(TARG_DYNAMIC)
 
 $(SLARS) : $(LOBJS)
-	$(CC) -shared -o $(SLARS) $(LIBSRCS)
+	$(CC) -shared -o $(SLARS) $(LOBJS)
 
 clean:
-	rm -f $(OBJS) $(LOBJS) $(LARS) $(SLARS) $(TARG) $(TARG_DYNAMIC)
+	rm -f $(OBJS) $(LOBJS) $(LARS) $(SLARS) $(TARG) $(TARG_DYNAMIC) $(AOBJS)
 
 
