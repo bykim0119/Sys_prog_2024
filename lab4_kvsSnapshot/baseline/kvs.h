@@ -2,6 +2,7 @@
 #include<string.h>
 #include<stdlib.h>
 #include<time.h>
+#include<unistd.h>
 
 #define MAX_LEVEL 16
 
@@ -22,11 +23,11 @@ typedef struct kvs kvs_t;
 
 
 kvs_t* open();
-int close(kvs_t* kvs); // free all mem alloc
+int kvs_close(kvs_t* kvs); // free all mem alloc
 int put(kvs_t* kvs, const char* key, const char* value); 
 char* get(kvs_t* kvs, const char* key); 
 int rand_lv();
 
 //func added for snapshot
 int do_snapshot(kvs_t* kvs, FILE* file); //file : src image file
-kvs_t* do_recovery(FILE* file);
+int do_recovery(kvs_t* kvs,FILE* file);
