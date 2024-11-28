@@ -46,7 +46,7 @@ kvs_t* open() {
     return kvs;
 }
 
-int do_recovery(kvs_t* kvs, FILE* file) {
+int do_recovery(kvs_t* kvs, int fd) {
     if (!file || !kvs) return 0;
 
     // 메타데이터 읽기
@@ -96,11 +96,12 @@ int do_recovery(kvs_t* kvs, FILE* file) {
     return 1;
 }
 
-int do_snapshot(kvs_t* kvs, FILE* file) { //나이브한 snapshot
-    if (!kvs || !file) return 0;
-    
+int do_snapshot(kvs_t* kvs) { //나이브한 snapshot
+    FILE* imgFile = fopen("kvs.img", "w");
 
-    fprintf(file, "%d,%d\n", kvs->kvs_mx_level, kvs->items); //메타데이터
+    if (!kvs || !imgFile) return 0;
+    
+    fprintf(imgFile, "%d,%d\n", kvs->kvs_mx_level, kvs->items); //메타데이터
     
     node_t* current = kvs->header->next[0]; // 레벨 0부터 시작
     while (current) {
@@ -110,9 +111,29 @@ int do_snapshot(kvs_t* kvs, FILE* file) { //나이브한 snapshot
             if (current->next[i]) node_level++;
             else break;
         }
-        fprintf(file, "%s,%s,%d\n", current->key, current->value, node_level);
+        fprintf(imgFile, "%s,%s,%d\n", current->key, current->value, node_level);
         current = current->next[0]; 
     }
+    
+	if (fflush(imgFile) != 0) {
+		perror("fflush");
+		fclose(imgFile);
+		return 1;
+	}
+		
+	int fd = fileno(imgFile);
+	if (fd == -1) {
+		perror("fileno");
+		fclose(imgFile);
+		return 1;
+	}
+
+	if (fsync(fd) != 0) {
+		perror("fsync");
+		fclose(imgFile);
+	}
+	printf("fsync success\n");
+	fclose(imgFile);
 
     return 1;
 }
