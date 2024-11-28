@@ -3,8 +3,11 @@
 #include<stdlib.h>
 #include<time.h>
 #include<unistd.h>
+#include <fcntl.h>
+#include<stdint.h>
 
 #define MAX_LEVEL 16
+#define SNAPSHOT_BUF_SIZE 4096//4096 * 250 //1MB buf
 
 struct node {
 	char key[100];
@@ -22,7 +25,7 @@ struct kvs{
 typedef struct kvs kvs_t; 
 
 
-kvs_t* open();
+kvs_t* kvs_open();
 int kvs_close(kvs_t* kvs); // free all mem alloc
 int put(kvs_t* kvs, const char* key, const char* value); 
 char* get(kvs_t* kvs, const char* key); 

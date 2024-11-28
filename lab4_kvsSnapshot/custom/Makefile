@@ -4,7 +4,7 @@ TARG = kvs_static
 TARG_DYNAMIC = kvs_dynamic
 
 CC = gcc
-OPTS = -Wall -g 
+OPTS = -Wall -g -pg
 LIBS = -L. -lkvs -Wl,-rpath=.
 
 OBJS = $(SRCS:.c=.o)

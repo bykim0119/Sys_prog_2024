@@ -9,35 +9,36 @@ int rand_lv(){ //레벨 난수 생성 함수
     return kvs_mx_level;
 }
 
-kvs_t* open() {
+kvs_t *kvs_open() {
+    kvs_t *kvs = (kvs_t *)malloc(sizeof(kvs_t));
+    if (!kvs) {
+        printf("Allocating kvs Failed\n");
+        return NULL;
+    }
 
-    kvs_t* kvs = (kvs_t*) malloc (sizeof(kvs_t));
-	if (!kvs) {
-		printf("Allocating kvs Failed\n");
-		return NULL;
-	}
     kvs->kvs_mx_level = 0;
     kvs->items = 0;
-    
-    kvs->header = (node_t*)malloc(sizeof(node_t));
 
+    kvs->header = (node_t *)malloc(sizeof(node_t));
     if (!kvs->header) {
         printf("Allocating header failed\n");
         free(kvs);
         return NULL;
     }
+
     for (int i = 0; i < MAX_LEVEL; i++) {
         kvs->header->next[i] = NULL;
     }
 
-	
-    FILE* snapshotFile = fopen("kvs.img", "r");
-    if (snapshotFile) {
+    char* ftarget = "kvs.img";
+    int fd = open(ftarget, O_RDONLY, 0644);
+    printf("%d\n", fd);
+    if (fd >= 0) {
         printf("now kvs recovering from image file . . .\n");
-        if(do_recovery(kvs, snapshotFile)){
+        if (do_recovery(kvs, fd)) {
             printf("kvs recovery success!\n");
-        };
-        fclose(snapshotFile);
+        }
+        close(fd);
         printf("Open: kvs has %d items\n", kvs->items);
         return kvs;
     }
@@ -47,94 +48,226 @@ kvs_t* open() {
 }
 
 int do_recovery(kvs_t* kvs, int fd) {
-    if (!file || !kvs) return 0;
-
-    // 메타데이터 읽기
-    if (fscanf(file, "%d,%d\n", &kvs->kvs_mx_level, &kvs->items) != 2) {
-        printf("Failed to read metadata from snapshot file\n");
+    if (!kvs || fd < 0) {
         return 0;
     }
 
-    // 데이터 읽기
+    // 기존 데이터 초기화
+    node_t* current = kvs->header->next[0];
+    while (current) {
+        node_t* next = current->next[0];
+        free(current->value);
+        free(current);
+        current = next;
+    }
+    for (int i = 0; i < MAX_LEVEL; i++) {
+        kvs->header->next[i] = NULL;
+    }
+    kvs->items = 0;
+    kvs->kvs_mx_level = 0;
+
+    // kvs 메타데이터 복원
+    if (read(fd, &(kvs->items), sizeof(int)) != sizeof(int) ||
+        read(fd, &(kvs->kvs_mx_level), sizeof(int)) != sizeof(int)) {
+        perror("Failed to read kvs metadata");
+        return -1;
+    }
+
+    // 데이터 복원 및 노드 생성
+    size_t key_len, value_len;
     char key[100];
     char* value = NULL;
-    int node_level;
-    node_t* prev_nodes[MAX_LEVEL];
 
+    // 이전 레벨 노드들을 추적하기 위한 배열
+    node_t* prev_nodes[MAX_LEVEL];
     for (int i = 0; i < MAX_LEVEL; i++) {
         prev_nodes[i] = kvs->header;
     }
 
-    // 각 노드 데이터 복원
-    while (fscanf(file, "%99[^,],%m[^,],%d\n", key, &value, &node_level) == 3) {
+    while (read(fd, &key_len, sizeof(size_t)) == sizeof(size_t)) {
+        if (key_len > sizeof(key)) {
+            fprintf(stderr, "Key length exceeds buffer size\n");
+            return -1;
+        }
+
+        if (read(fd, key, key_len) != (ssize_t)key_len ||
+            read(fd, &value_len, sizeof(size_t)) != sizeof(size_t)) {
+            perror("Failed to read kvs data");
+            return -1;
+        }
+
+        value = (char*)malloc(value_len);
+        if (!value || read(fd, value, value_len) != (ssize_t)value_len) {
+            perror("Failed to allocate or read value");
+            free(value);
+            return -1;
+        }
+
         // 새로운 노드 생성
         node_t* new_node = (node_t*)malloc(sizeof(node_t));
         if (!new_node) {
-            printf("Memory allocation failed for node\n");
+            perror("Failed to allocate memory for new node");
             free(value);
-            return 0;
+            return -1;
         }
 
-        // 키 복사 및 값 동적 할당
         strcpy(new_node->key, key);
-        new_node->value = value; // fscanf에서 할당한 메모리를 사용
-
+        new_node->value = value;
         for (int i = 0; i < MAX_LEVEL; i++) {
             new_node->next[i] = NULL;
         }
 
-        // 레벨별로 링크 업데이트
-        for (int i = 0; i < node_level; i++) {
+        // 노드 연결 (레벨별로 연결)
+        int node_level = rand_lv(); // 레벨 결정 (난수 생성)
+        for (int i = 0; i <= node_level; i++) {
+            new_node->next[i] = prev_nodes[i]->next[i];
             prev_nodes[i]->next[i] = new_node;
             prev_nodes[i] = new_node;
         }
 
-        // 다음 값 초기화
-        value = NULL; // fscanf가 새로 메모리를 할당하도록 초기화
+        value = NULL;
     }
 
     return 1;
 }
 
-int do_snapshot(kvs_t* kvs) { //나이브한 snapshot
-    FILE* imgFile = fopen("kvs.img", "w");
 
-    if (!kvs || !imgFile) return 0;
-    
-    fprintf(imgFile, "%d,%d\n", kvs->kvs_mx_level, kvs->items); //메타데이터
-    
-    node_t* current = kvs->header->next[0]; // 레벨 0부터 시작
+
+int do_snapshot(kvs_t* kvs) {
+    if (!kvs || !kvs->header) {
+        return -1;
+    }
+
+    int fd = open("kvs.img", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0) {
+        perror("Failed to open snapshot file");
+        return -1;
+    }
+
+    // kvs 메타데이터 저장
+    if (write(fd, &(kvs->items), sizeof(int)) != sizeof(int) ||
+        write(fd, &(kvs->kvs_mx_level), sizeof(int)) != sizeof(int)) {
+        perror("Failed to write kvs metadata");
+        close(fd);
+        return -1;
+    }
+
+    // 데이터 저장
+    node_t* current = kvs->header->next[0];
     while (current) {
-        // 각 노드의 키, 값, 레벨을 저장
-        int node_level = 0;
-        for (int i = 0; i < MAX_LEVEL; i++) {
-            if (current->next[i]) node_level++;
-            else break;
+        size_t key_len = strlen(current->key) + 1; // NULL 포함
+        size_t value_len = strlen(current->value) + 1;
+
+        if (write(fd, &key_len, sizeof(size_t)) != sizeof(size_t) ||
+            write(fd, current->key, key_len) != (ssize_t)key_len ||
+            write(fd, &value_len, sizeof(size_t)) != sizeof(size_t) ||
+            write(fd, current->value, value_len) != (ssize_t)value_len) {
+            perror("Failed to write kvs data");
+            close(fd);
+            return -1;
         }
-        fprintf(imgFile, "%s,%s,%d\n", current->key, current->value, node_level);
-        current = current->next[0]; 
+        current = current->next[0];
     }
-    
-	if (fflush(imgFile) != 0) {
-		perror("fflush");
-		fclose(imgFile);
-		return 1;
-	}
-		
-	int fd = fileno(imgFile);
-	if (fd == -1) {
-		perror("fileno");
-		fclose(imgFile);
-		return 1;
-	}
 
-	if (fsync(fd) != 0) {
-		perror("fsync");
-		fclose(imgFile);
-	}
-	printf("fsync success\n");
-	fclose(imgFile);
-
+    close(fd);
     return 1;
 }
+
+//valgrind --tool=callgrind
+
+// Snapshot 기능: KVS 상태를 kvs.img에 저장
+
+// do_snapshot 함수#include <errno.h>
+
+// do_snapshot: kvs 정보를 kvs.img에 저장
+// int do_snapshot(kvs_t* kvs) {
+//     if (!kvs || !kvs->header) {
+//         return -1;
+//     }
+
+//     int fd = open("kvs.img", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+//     if (fd < 0) {
+//         perror("Failed to open snapshot file");
+//         return -1;
+//     }
+
+//     // kvs의 metadata 저장 (items, kvs_mx_level)
+//     if (write(fd, &(kvs->items), sizeof(int)) != sizeof(int) ||
+//         write(fd, &(kvs->kvs_mx_level), sizeof(int)) != sizeof(int)) {
+//         perror("Failed to write kvs metadata");
+//         close(fd);
+//         return -1;
+//     }
+
+//     // 각 노드를 순회하며 key와 value 저장
+//     node_t* current = kvs->header->next[0];
+//     while (current) {
+//         size_t key_len = strlen(current->key) + 1; // NULL 포함
+//         size_t value_len = strlen(current->value) + 1;
+
+//         if (write(fd, &key_len, sizeof(size_t)) != sizeof(size_t) ||
+//             write(fd, current->key, key_len) != (ssize_t)key_len ||
+//             write(fd, &value_len, sizeof(size_t)) != sizeof(size_t) ||
+//             write(fd, current->value, value_len) != (ssize_t)value_len) {
+//             perror("Failed to write kvs data");
+//             close(fd);
+//             return -1;
+//         }
+//         current = current->next[0];
+//     }
+
+//     close(fd);
+//     return 1;
+// }
+
+// // do_recovery: kvs.img에서 데이터를 읽어 kvs 복원
+// int do_recovery(kvs_t* kvs, int fd) {
+//     if (!kvs || fd < 0) {
+//         return 0;
+//     }
+
+//     // kvs의 metadata 복원
+//     if (read(fd, &(kvs->items), sizeof(int)) != sizeof(int) ||
+//         read(fd, &(kvs->kvs_mx_level), sizeof(int)) != sizeof(int)) {
+//         perror("Failed to read kvs metadata");
+//         return -1;
+//     }
+
+//     // 데이터 복원
+//     size_t key_len, value_len;
+//     char key[100];
+//     char* value = NULL;
+
+//     while (read(fd, &key_len, sizeof(size_t)) == sizeof(size_t)) {
+//         if (key_len > sizeof(key)) {
+//             fprintf(stderr, "Key length exceeds buffer size\n");
+//             return -1;
+//         }
+
+//         if (read(fd, key, key_len) != (ssize_t)key_len ||
+//             read(fd, &value_len, sizeof(size_t)) != sizeof(size_t)) {
+//             perror("Failed to read kvs data");
+//             return -1;
+//         }
+
+//         value = (char*)malloc(value_len);
+//         if (!value || read(fd, value, value_len) != (ssize_t)value_len) {
+//             perror("Failed to allocate or read value");
+//             free(value);
+//             return -1;
+//         }
+
+//         if (put(kvs, key, value) < 0) {
+//             fprintf(stderr, "Failed to insert key-value during recovery\n");
+//             free(value);
+//             return -1;
+//         }
+
+//         free(value);
+//         value = NULL;
+//     }
+
+//     return 1;
+// }
+
 
