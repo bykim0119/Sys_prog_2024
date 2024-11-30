@@ -90,18 +90,15 @@ int do_recovery(kvs_t* kvs, int fd) {
     char buffer[SNAPSHOT_BUF_SIZE];
     ssize_t buffer_size = 0, buffer_offset = 0;
 
-
     if (bRead(fd, buffer, &buffer_size, &buffer_offset, &(kvs->items), sizeof(int)) != sizeof(int) || //kvs메타 데이터 읽기
         bRead(fd, buffer, &buffer_size, &buffer_offset, &(kvs->kvs_mx_level), sizeof(int)) != sizeof(int)) {
         perror("Failed to read kvs metadata");
         return -1;
     }
 
-
     size_t key_len, value_len;
     char key[100];
     char* value = NULL;
-
 
     node_t* prev_nodes[MAX_LEVEL];
     for (int i = 0; i < MAX_LEVEL; i++) {
@@ -202,10 +199,10 @@ int do_snapshot(kvs_t* kvs) { //텍스트 기반 파일 -> 바이너리 기반 �
     }
 
     if (fsync(fd) < 0) { //fsync
-    perror("Failed to fsync");
-    close(fd);
-    return -1;
-}
+        perror("Failed to fsync");
+        close(fd);
+        return -1;
+    }
 
     close(fd);
     return 1;
