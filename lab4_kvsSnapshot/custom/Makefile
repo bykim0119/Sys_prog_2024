@@ -18,7 +18,7 @@ all:
 static: $(TARG)
 
 $(TARG) : $(OBJS) $(LARS)
-	$(CC) -o $(TARG) $(OBJS) $(LIBS) -static
+	$(CC) -pg -o $(TARG) $(OBJS) $(LIBS) -static
 
 $(LARS) : $(LOBJS)
 	ar rs $(LARS) $(LOBJS)
@@ -29,7 +29,7 @@ $(LARS) : $(LOBJS)
 #dynamic
 dynamic: $(TARG_DYNAMIC)
 $(TARG_DYNAMIC) : $(OBJS) $(SLARS)
-	$(CC) -o $(TARG_DYNAMIC) $(OBJS) $(LIBS)
+	$(CC) -pg -o $(TARG_DYNAMIC) $(OBJS) $(LIBS)
 	ldd $(TARG_DYNAMIC)
 
 $(SLARS) : $(LOBJS)

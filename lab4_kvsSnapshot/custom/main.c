@@ -46,6 +46,7 @@ int main(int argc, char* argv[])
 	}
 		
 	kvs_close(kvs);
+	printf("========================Now opening kvs from img file================================\n");
 
 	kvs_t* recovered_kvs = kvs_open(); //kvs.img를 통해 do_recovery로 kvs구성
 	printf("key : %s, val : %s\n\n", "tweet55", get(recovered_kvs, "tweet55"));

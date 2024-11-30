@@ -49,15 +49,14 @@ kvs_t* open() {
 int do_recovery(kvs_t* kvs, FILE* file) {
     if (!file || !kvs) return 0;
 
-    // 메타데이터 읽기
+    // 메타데이터 읽기(snapshot으로 저장했던 kvs의 메타데이터(최대레벨, 아이템수))
     if (fscanf(file, "%d,%d\n", &kvs->kvs_mx_level, &kvs->items) != 2) {
         printf("Failed to read metadata from snapshot file\n");
         return 0;
     }
 
-    // 데이터 읽기
     char key[100];
-    char* value = NULL;
+    char* value = NULL; //value가 너무 긴 경우가 많아서 동적할당 사용
     int node_level;
     node_t* prev_nodes[MAX_LEVEL];
 
@@ -65,54 +64,52 @@ int do_recovery(kvs_t* kvs, FILE* file) {
         prev_nodes[i] = kvs->header;
     }
 
-    // 각 노드 데이터 복원
     while (fscanf(file, "%99[^,],%m[^,],%d\n", key, &value, &node_level) == 3) {
         // 새로운 노드 생성
-        node_t* new_node = (node_t*)malloc(sizeof(node_t));
+        node_t* new_node = (node_t*)malloc(sizeof(node_t)); //put을 사용하면 시간이 매우 오래걸리고, 이전의 kvs와 달라지는 부분이 생긴다(put에 랜덤성이 있으므로)
         if (!new_node) {
             printf("Memory allocation failed for node\n");
             free(value);
             return 0;
         }
 
-        // 키 복사 및 값 동적 할당
+        // key 복사 및 value 동적 할당
         strcpy(new_node->key, key);
-        new_node->value = value; // fscanf에서 할당한 메모리를 사용
+        new_node->value = value; 
 
         for (int i = 0; i < MAX_LEVEL; i++) {
             new_node->next[i] = NULL;
         }
 
-        // 레벨별로 링크 업데이트
+        // level별로 링킹
         for (int i = 0; i < node_level; i++) {
             prev_nodes[i]->next[i] = new_node;
             prev_nodes[i] = new_node;
         }
 
-        // 다음 값 초기화
-        value = NULL; // fscanf가 새로 메모리를 할당하도록 초기화
+        value = NULL; // value 초기화
     }
 
     return 1;
 }
 
-int do_snapshot(kvs_t* kvs) { //나이브한 snapshot
+int do_snapshot(kvs_t* kvs) { //나이브한 snapshot(텍스트 기반 이미지파일을 생성함)
     FILE* imgFile = fopen("kvs.img", "w");
 
     if (!kvs || !imgFile) return 0;
     
-    fprintf(imgFile, "%d,%d\n", kvs->kvs_mx_level, kvs->items); //메타데이터
+    fprintf(imgFile, "%d,%d\n", kvs->kvs_mx_level, kvs->items); //kvs메타데이터 (이 kvs의 최대레벨, 아이템수)
     
-    node_t* current = kvs->header->next[0]; // 레벨 0부터 시작
-    while (current) {
-        // 각 노드의 키, 값, 레벨을 저장
+    node_t* node = kvs->header->next[0]; // 레벨 0부터 시작
+    while (node) {
+        // 각 노드의 kv쌍을 순차적으로 파일에 기록
         int node_level = 0;
         for (int i = 0; i < MAX_LEVEL; i++) {
-            if (current->next[i]) node_level++;
+            if (node->next[i]) node_level++;
             else break;
         }
-        fprintf(imgFile, "%s,%s,%d\n", current->key, current->value, node_level);
-        current = current->next[0]; 
+        fprintf(imgFile, "%s,%s,%d\n", node->key, node->value, node_level);
+        node = node->next[0]; 
     }
     
 	if (fflush(imgFile) != 0) {
@@ -128,12 +125,15 @@ int do_snapshot(kvs_t* kvs) { //나이브한 snapshot
 		return 1;
 	}
 
-	if (fsync(fd) != 0) {
+	if (fsync(fd) != 0) {  //fsync호출
 		perror("fsync");
 		fclose(imgFile);
 	}
 	printf("fsync success\n");
+
 	fclose(imgFile);
+
+
 
     return 1;
 }

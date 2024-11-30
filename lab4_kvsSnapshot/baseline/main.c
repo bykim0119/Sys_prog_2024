@@ -18,6 +18,8 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
+
+
 	char op[10], key_q[100], *value_q = NULL; //buffer
 
     while (fscanf(queryFile, "%9[^,],%99[^,],%ms\n", op, key_q, &value_q) != EOF) {
@@ -44,8 +46,10 @@ int main(int argc, char* argv[])
 		printf("snapshot error: open file");
 		return -1;
 	}
+
 		
 	kvs_close(kvs);
+	printf("========================Now opening kvs from img file================================\n");
 
 	kvs_t* recovered_kvs = open(); //kvs.img를 통해 do_recovery로 kvs구성
 	printf("key : %s, val : %s\n\n", "tweet55", get(recovered_kvs, "tweet55"));

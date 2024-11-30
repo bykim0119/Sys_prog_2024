@@ -7,7 +7,7 @@
 #include<stdint.h>
 
 #define MAX_LEVEL 16
-#define SNAPSHOT_BUF_SIZE 4096//4096 * 250 //1MB buf
+#define SNAPSHOT_BUF_SIZE 4096 * 250// * 4 //1MB buf
 
 struct node {
 	char key[100];
